@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bloom Tracker">
+<title>Bloom Tracker</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #eeede9;
+    --text: #1a1a1a;
+    --text2: #6b6b68;
+    --text3: #9e9d99;
+    --border: rgba(0,0,0,0.10);
+    --border2: rgba(0,0,0,0.18);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --green-bg: #e1f5ee;
+    --green-text: #085041;
+    --green-border: #1d9e75;
+    --amber-bg: #faeeda;
+    --amber-text: #633806;
+    --amber-border: #ef9f27;
+    --red-bg: #fcebeb;
+    --red-text: #791f1f;
+    --success-bg: #e1f5ee;
+    --success-text: #085041;
+    --warning-bg: #faeeda;
+    --warning-text: #633806;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg2); color: var(--text); min-height: 100vh; }
+  .app { max-width: 430px; margin: 0 auto; background: var(--bg2); min-height: 100vh; }
+  .header { background: var(--bg); padding: 52px 1rem 0.5rem; border-bottom: 0.5px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .app-title { font-size: 20px; font-weight: 600; color: var(--text); }
+  .app-subtitle { font-size: 12px; color: var(--text2); }
+  .export-btn { font-size: 12px; padding: 6px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text2); cursor: pointer; }
+  .nav { display: flex; gap: 4px; }
+  .nav-btn { flex: 1; padding: 8px 4px; font-size: 12px; border: 0.5px solid var(--border); border-radius: var(--radius); background: transparent; color: var(--text2); cursor: pointer; text-align: center; }
+  .nav-btn.active { background: var(--bg2); color: var(--text); font-weight: 500; border-color: var(--border2); }
+  .content { padding: 1rem; }
+  .section-title { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.75rem; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
+  .flower-header { display: flex; align-items: center; gap: 12px; margin-bottom: 0.75rem; }
+  .flower-thumb { width: 52px; height: 52px; border-radius: var(--radius); object-fit: cover; flex-shrink: 0; border: 0.5px solid var(--border); }
+  .flower-icon { width: 52px; height: 52px; border-radius: var(--radius); flex-shrink: 0; border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; }
+  .flower-meta { flex: 1; }
+  .flower-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .flower-cultivar { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .stages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .stage { background: var(--bg2); border-radius: var(--radius); padding: 8px; text-align: center; }
+  .stage-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .stage-count { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1; }
+  .stage-unit { font-size: 11px; color: var(--text3); }
+  .stage-controls { display: flex; justify-content: center; gap: 6px; margin-top: 6px; }
+  .adj-btn { width: 28px; height: 28px; border-radius: 50%; border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .alert-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--warning-bg); border-radius: var(--radius); margin-top: 8px; }
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef9f27; flex-shrink: 0; }
+  .alert-text { font-size: 12px; color: var(--warning-text); }
+  .photo-btn { display: flex; align-items: center; gap: 8px; padding: 11px 14px; font-size: 13px; font-weight: 500; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); cursor: pointer; width: 100%; margin-bottom: 0.75rem; }
+  .id-loading { display: none; align-items: center; gap: 10px; padding: 12px; background: var(--bg2); border-radius: var(--radius); margin-bottom: 0.75rem; font-size: 13px; color: var(--text2); }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--text2); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .id-result { border: 0.5px solid var(--border2); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 0.75rem; display: none; background: var(--bg); }
+  .id-preview { width: 100%; height: 120px; object-fit: cover; border-radius: var(--radius); margin-bottom: 0.75rem; display: none; }
+  .confidence-row { display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  .conf-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .conf-high { background: var(--green-bg); color: var(--green-text); }
+  .conf-medium { background: var(--amber-bg); color: var(--amber-text); }
+  .conf-low { background: var(--red-bg); color: var(--red-text); }
+  .edit-hint { font-size: 12px; color: var(--amber-text); }
+  .field-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 0.75rem; }
+  .field-label { font-size: 12px; color: var(--text2); }
+  .field-input { font-size: 14px; font-weight: 500; padding: 10px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); width: 100%; }
+  .field-input.highlight { border: 1.5px solid var(--amber-border); background: var(--amber-bg); }
+  .colour-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+  .colour-label { font-size: 12px; color: var(--text2); flex-shrink: 0; }
+  .colour-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s; }
+  .swatch.selected { border-color: var(--text); transform: scale(1.15); }
+  .id-actions { display: flex; gap: 8px; }
+  .id-accept { flex: 1; padding: 10px; font-size: 13px; font-weight: 500; border: 0.5px solid var(--green-border); border-radius: var(--radius); background: var(--green-bg); color: var(--green-text); cursor: pointer; }
+  .id-dismiss { padding: 10px 14px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text2); cursor: pointer; }
+  .sale-form { display: flex; flex-direction: column; gap: 0.75rem; }
+  .form-row { display: flex; gap: 8px; align-items: flex-end; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .form-label { font-size: 12px; color: var(--text2); }
+  select, input[type=number], input[type=text] { font-size: 14px; padding: 10px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); width: 100%; appearance: none; -webkit-appearance: none; }
+  .record-btn { padding: 11px 1rem; font-size: 14px; font-weight: 500; border: 0.5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+  .sale-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .sale-item:last-child { border-bottom: none; }
+  .sale-left { display: flex; flex-direction: column; gap: 2px; }
+  .sale-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .sale-meta { font-size: 12px; color: var(--text2); }
+  .sale-amount { font-size: 15px; font-weight: 600; color: var(--text); }
+  .prop-item { padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .prop-item:last-child { border-bottom: none; }
+  .prop-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .prop-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .prop-arrow { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius); padding: 0.75rem 1rem; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 600; color: var(--text); }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .tab-content { display: none; }
+  .tab-content.visible { display: block; }
+  .flash { padding: 10px 20px; border-radius: var(--radius-lg); font-size: 13px; font-weight: 500; text-align: center; margin-top: 0.75rem; display: none; }
+  .flash-success { background: var(--success-bg); color: var(--success-text); border: 0.5px solid var(--green-border); }
+  .stage-move { font-size: 12px; color: var(--text2); padding: 8px 10px; background: var(--bg2); border-radius: var(--radius); margin-bottom: 0.75rem; display: none; }
+  .supplier-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+  .supplier-row:last-child { border-bottom: none; }
+  .sup-left { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .sup-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .sup-detail { font-size: 12px; color: var(--text2); }
+  .sup-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+  .status-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; cursor: pointer; border: 0.5px solid var(--border); white-space: nowrap; font-weight: 500; }
+  .badge-ok { background: var(--success-bg); color: var(--success-text); }
+  .badge-low { background: var(--warning-bg); color: var(--warning-text); }
+  .del-btn { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; padding: 0; }
+  .status-toggle { display: flex; gap: 6px; margin-bottom: 0.75rem; }
+  .toggle-opt { flex: 1; padding: 9px; font-size: 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text2); cursor: pointer; text-align: center; }
+  .toggle-opt.active { background: var(--bg2); color: var(--text); font-weight: 500; }
+  .sub-nav { display: flex; gap: 4px; margin-bottom: 1rem; }
+  .sub-btn { flex: 1; padding: 8px 4px; font-size: 12px; border: 0.5px solid var(--border); border-radius: var(--radius); background: transparent; color: var(--text2); cursor: pointer; text-align: center; }
+  .sub-btn.active { background: var(--bg2); color: var(--text); font-weight: 500; border-color: var(--border2); }
+  .sub-panel { display: none; }
+  .sub-panel.visible { display: block; }
+  .export-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: flex-end; justify-content: center; }
+  .export-modal.open { display: flex; }
+  .export-sheet { background: var(--bg); border-radius: 16px 16px 0 0; padding: 1.5rem 1rem 2rem; width: 100%; max-width: 430px; }
+  .export-title { font-size: 16px; font-weight: 600; margin-bottom: 1rem; }
+  .export-option { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 0.5px solid var(--border); cursor: pointer; }
+  .export-option:last-child { border-bottom: none; }
+  .export-option-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .export-option-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .export-arrow { color: var(--text3); font-size: 16px; }
+  .export-close { width: 100%; padding: 12px; margin-top: 1rem; font-size: 14px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text2); cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="app-title">Bloom Tracker</div>
+        <div class="app-subtitle" id="header-date"></div>
+      </div>
+      <button class="export-btn" onclick="openExport()">Export data</button>
+    </div>
+    <div class="nav">
+      <button class="nav-btn active" onclick="showTab('inventory',this)">Stock</button>
+      <button class="nav-btn" onclick="showTab('sales',this)">Sales</button>
+      <button class="nav-btn" onclick="showTab('suppliers',this)">Suppliers</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- STOCK TAB -->
+    <div id="tab-inventory" class="tab-content visible">
+      <div class="section-title">Live stock</div>
+      <div id="variety-list"></div>
+      <div class="section-title" style="margin-top:1rem;">Add new variety</div>
+      <button class="photo-btn" onclick="document.getElementById('photo-inv').click()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Take photo to identify flower
+      </button>
+      <input type="file" id="photo-inv" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+      <div class="id-loading" id="loading-inv"><div class="spinner"></div>Identifying flower &amp; colour...</div>
+      <div class="id-result" id="result-inv">
+        <img id="preview-inv" class="id-preview" alt="flower">
+        <div class="confidence-row"><span class="conf-badge" id="conf-inv"></span><span class="edit-hint" id="hint-inv" style="display:none">Not sure? Edit the fields below.</span></div>
+        <div class="field-group"><div class="field-label">Flower name</div><input type="text" class="field-input" id="inv-flower" placeholder="e.g. Lavender"></div>
+        <div class="field-group"><div class="field-label">Cultivar</div><input type="text" class="field-input" id="inv-cultivar" placeholder="e.g. Hidcote"></div>
+        <div class="colour-row"><span class="colour-label">Icon colour</span><div class="colour-swatches" id="swatches"></div></div>
+        <div class="id-actions">
+          <button class="id-accept" onclick="acceptVariety()">Add this variety</button>
+          <button class="id-dismiss" onclick="document.getElementById('result-inv').style.display='none'">Dismiss</button>
+        </div>
+      </div>
+      <div class="flash flash-success" id="inv-flash"></div>
+    </div>
+
+    <!-- SALES TAB -->
+    <div id="tab-sales" class="tab-content">
+      <div class="section-title">Record a sale</div>
+      <div class="card">
+        <div class="sale-form">
+          <button class="photo-btn" onclick="document.getElementById('photo-sales').click()" style="margin-bottom:0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Snap to identify flower
+          </button>
+          <input type="file" id="photo-sales" accept="image/*" capture="environment" style="display:none" onchange="handleSalesPhoto(event)">
+          <div class="id-loading" id="loading-sales"><div class="spinner"></div>Identifying flower...</div>
+          <div class="id-result" id="result-sales">
+            <img id="preview-sales" class="id-preview" alt="flower">
+            <div class="confidence-row"><span class="conf-badge" id="conf-sales"></span><span class="edit-hint" id="hint-sales" style="display:none">Not sure? Edit below.</span></div>
+            <div class="field-group"><div class="field-label">Flower name</div><input type="text" class="field-input" id="sales-flower-id" placeholder="e.g. Hydrangea"></div>
+            <div class="field-group"><div class="field-label">Stage</div><input type="text" class="field-input" id="sales-stage-id" placeholder="e.g. Ready"></div>
+            <div class="id-actions">
+              <button class="id-accept" onclick="acceptSaleFlower()">Use this</button>
+              <button class="id-dismiss" onclick="document.getElementById('result-sales').style.display='none'">Dismiss</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><div class="form-label">Flower</div><select id="sale-flower"></select></div>
+            <div class="form-group"><div class="form-label">Stage</div><select id="sale-stage"><option>Ready</option><option>Sapling</option><option>Cutting</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><div class="form-label">Customer</div><input type="text" id="sale-customer" placeholder="Name (optional)"></div>
+            <div class="form-group" style="max-width:80px;"><div class="form-label">Qty</div><input type="number" id="sale-qty" value="1" min="1"></div>
+            <div class="form-group" style="max-width:90px;"><div class="form-label">Price ea.</div><input type="number" id="sale-price" value="5" min="0" step="0.5"></div>
+          </div>
+          <button class="record-btn" onclick="recordSale()">Record sale</button>
+        </div>
+      </div>
+      <div class="section-title">Recent sales</div>
+      <div class="card" id="sales-list"><div style="font-size:13px;color:var(--text2);text-align:center;padding:8px 0;">No sales yet</div></div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">This month</div><div class="stat-value" id="month-total">$0</div><div class="stat-sub" id="sales-count">0 sales</div></div>
+        <div class="stat-card"><div class="stat-label">Units sold</div><div class="stat-value" id="units-total">0</div><div class="stat-sub">this month</div></div>
+      </div>
+    </div>
+
+    <!-- SUPPLIERS TAB -->
+    <div id="tab-suppliers" class="tab-content">
+      <div class="sub-nav">
+        <button class="sub-btn active" onclick="showSubPanel('suppliers-panel',this)">Suppliers</button>
+        <button class="sub-btn" onclick="showSubPanel('prop-panel',this)">Propagation</button>
+      </div>
+
+      <div id="suppliers-panel" class="sub-panel visible">
+        <div class="section-title">Add supplier</div>
+        <div class="card">
+          <div class="field-group"><div class="field-label">Supplier name</div><input type="text" id="sup-name" placeholder="e.g. Green Valley Nursery"></div>
+          <div class="field-group"><div class="field-label">Flowers supplied</div><input type="text" id="sup-flowers" placeholder="e.g. Hydrangea, Geranium"></div>
+          <div class="field-group"><div class="field-label">Note (optional)</div><input type="text" id="sup-note" placeholder="e.g. Last order: 12 Apr"></div>
+          <div class="field-label" style="margin-bottom:6px;">Stock status</div>
+          <div class="status-toggle">
+            <button class="toggle-opt active" id="tog-ok" onclick="setStatus('ok')">Good stock</button>
+            <button class="toggle-opt" id="tog-low" onclick="setStatus('low')">Reorder soon</button>
+          </div>
+          <button class="record-btn" onclick="addSupplier()">Add supplier</button>
+        </div>
+        <div class="section-title">Your suppliers</div>
+        <div class="card" id="supplier-list"></div>
+        <div class="flash flash-success" id="sup-flash"></div>
+      </div>
+
+      <div id="prop-panel" class="sub-panel">
+        <div class="section-title">Log propagation batch</div>
+        <div class="card">
+          <div class="field-group"><div class="field-label">Variety</div><select id="prop-variety" onchange="updatePropHint()"></select></div>
+          <div class="form-row">
+            <div class="form-group">
+              <div class="form-label">Action</div>
+              <select id="prop-action" onchange="updatePropHint()">
+                <option value="cut">Cuttings taken from parent</option>
+                <option value="sap">Cuttings potted up to saplings</option>
+                <option value="rdy">Saplings moved to ready</option>
+              </select>
+            </div>
+            <div class="form-group" style="max-width:90px;"><div class="form-label">Quantity</div><input type="number" id="prop-qty" value="10" min="1"></div>
+          </div>
+          <div class="stage-move" id="prop-hint"></div>
+          <button class="record-btn" onclick="logPropagation()">Log batch</button>
+        </div>
+        <div class="section-title">Propagation log</div>
+        <div class="card" id="prop-log"><div style="font-size:13px;color:var(--text2);text-align:center;padding:8px 0;">No batches logged yet</div></div>
+        <div class="flash flash-success" id="prop-flash"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="export-modal" id="export-modal">
+  <div class="export-sheet">
+    <div class="export-title">Export data</div>
+    <div class="export-option" onclick="exportCSV('sales')">
+      <div><div class="export-option-name">Sales history</div><div class="export-option-desc">All sales records with date, flower, qty &amp; price</div></div>
+      <span class="export-arrow">↓</span>
+    </div>
+    <div class="export-option" onclick="exportCSV('stock')">
+      <div><div class="export-option-name">Current stock</div><div class="export-option-desc">All varieties with current cutting, sapling &amp; ready counts</div></div>
+      <span class="export-arrow">↓</span>
+    </div>
+    <div class="export-option" onclick="exportCSV('propagation')">
+      <div><div class="export-option-name">Propagation log</div><div class="export-option-desc">All batch logs with variety, action &amp; quantity</div></div>
+      <span class="export-arrow">↓</span>
+    </div>
+    <div class="export-option" onclick="exportCSV('suppliers')">
+      <div><div class="export-option-name">Suppliers</div><div class="export-option-desc">Supplier list with status &amp; notes</div></div>
+      <span class="export-arrow">↓</span>
+    </div>
+    <button class="export-close" onclick="closeExport()">Close</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'bloomtracker_v1';
+const PALETTE = [
+  {hex:'#E8A0BF',label:'pink'},{hex:'#F4845F',label:'orange'},{hex:'#F7C948',label:'yellow'},
+  {hex:'#B8E0A0',label:'light green'},{hex:'#5DCAA5',label:'teal'},{hex:'#7EB8F7',label:'blue'},
+  {hex:'#B39DDB',label:'purple'},{hex:'#F28B82',label:'red'},{hex:'#FFFFFF',label:'white'},{hex:'#D3D1C7',label:'grey'}
+];
+
+let state = {
+  varieties: [],
+  sales: [], propLogs: [],
+  suppliers: []
+};
+
+let pendingPhotoUrl = null, selectedColour = null, newSupStatus = 'ok';
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try {
+    const r = localStorage.getItem(STORAGE_KEY);
+    if (r) { const p = JSON.parse(r); if (p.varieties) { if (!p.suppliers) p.suppliers = state.suppliers; state = p; } }
+  } catch(e) {}
+}
+
+function hexToRgb(hex) { return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)]; }
+function lighten(hex, amt) { let [r,g,b] = hexToRgb(hex); return '#'+[Math.min(255,Math.round(r+(255-r)*amt)),Math.min(255,Math.round(g+(255-g)*amt)),Math.min(255,Math.round(b+(255-b)*amt))].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function darken(hex, amt) { let [r,g,b] = hexToRgb(hex); return '#'+[Math.max(0,Math.round(r*(1-amt))),Math.max(0,Math.round(g*(1-amt))),Math.max(0,Math.round(b*(1-amt)))].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+
+function flowerSVG(colour) {
+  const light = lighten(colour, 0.35);
+  return `<svg width="30" height="30" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="3" fill="${darken(colour,0.2)}"/><ellipse cx="14" cy="7" rx="3" ry="4" fill="${colour}"/><ellipse cx="14" cy="21" rx="3" ry="4" fill="${colour}"/><ellipse cx="7" cy="14" rx="4" ry="3" fill="${colour}"/><ellipse cx="21" cy="14" rx="4" ry="3" fill="${colour}"/><ellipse cx="9.5" cy="9.5" rx="2.5" ry="3.5" transform="rotate(-45 9.5 9.5)" fill="${light}"/><ellipse cx="18.5" cy="9.5" rx="2.5" ry="3.5" transform="rotate(45 18.5 9.5)" fill="${light}"/><ellipse cx="9.5" cy="18.5" rx="2.5" ry="3.5" transform="rotate(45 9.5 18.5)" fill="${light}"/><ellipse cx="18.5" cy="18.5" rx="2.5" ry="3.5" transform="rotate(-45 18.5 18.5)" fill="${light}"/></svg>`;
+}
+
+function fmtDate(iso) { const d = new Date(iso); return d.getDate() + ' ' + d.toLocaleString('default',{month:'short'}) + ' ' + d.getFullYear(); }
+function fmtShort(iso) { const d = new Date(iso); return d.getDate() + ' ' + d.toLocaleString('default',{month:'short'}); }
+
+function flash(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 2500);
+}
+
+function showTab(tab, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('visible'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('visible');
+  btn.classList.add('active');
+}
+
+function showSubPanel(id, btn) {
+  document.querySelectorAll('.sub-panel').forEach(el => el.classList.remove('visible'));
+  document.querySelectorAll('.sub-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('visible');
+  btn.classList.add('active');
+  if (id === 'prop-panel') updatePropHint();
+}
+
+function setStatus(s) {
+  newSupStatus = s;
+  document.getElementById('tog-ok').className = 'toggle-opt' + (s === 'ok' ? ' active' : '');
+  document.getElementById('tog-low').className = 'toggle-opt' + (s === 'low' ? ' active' : '');
+}
+
+function renderVarieties() {
+  const list = document.getElementById('variety-list');
+  const sel = document.getElementById('sale-flower');
+  const psel = document.getElementById('prop-variety');
+  list.innerHTML = ''; sel.innerHTML = ''; psel.innerHTML = '';
+  if (!state.varieties.length) { list.innerHTML = '<div style="font-size:13px;color:var(--text2);text-align:center;padding:16px 0;">No varieties yet — add one below</div>'; return; }
+  state.varieties.forEach((v, i) => {
+    const lowRdy = v.counts.rdy <= 5;
+    const thumb = v.photo
+      ? `<img src="${v.photo}" class="flower-thumb" alt="${v.name}">`
+      : `<div class="flower-icon" style="background:${lighten(v.colour,0.5)};">${flowerSVG(v.colour)}</div>`;
+    list.innerHTML += `<div class="card">
+      <div class="flower-header">${thumb}<div class="flower-meta"><div class="flower-name">${v.name}</div><div class="flower-cultivar">${v.cultivar}</div></div><button onclick="deleteVariety(${i})" style="margin-left:auto;align-self:flex-start;font-size:11px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text3);cursor:pointer;flex-shrink:0;">Remove</button></div>
+      <div class="stages">
+        <div class="stage"><div class="stage-label">Cuttings</div><div class="stage-count">${v.counts.cut}</div><div class="stage-unit">pcs</div><div class="stage-controls"><button class="adj-btn" onclick="adjust(${i},'cut',-1)">−</button><button class="adj-btn" onclick="adjust(${i},'cut',1)">+</button></div></div>
+        <div class="stage"><div class="stage-label">Saplings</div><div class="stage-count">${v.counts.sap}</div><div class="stage-unit">pcs</div><div class="stage-controls"><button class="adj-btn" onclick="adjust(${i},'sap',-1)">−</button><button class="adj-btn" onclick="adjust(${i},'sap',1)">+</button></div></div>
+        <div class="stage"><div class="stage-label">Ready</div><div class="stage-count">${v.counts.rdy}</div><div class="stage-unit">pcs</div><div class="stage-controls"><button class="adj-btn" onclick="adjust(${i},'rdy',-1)">−</button><button class="adj-btn" onclick="adjust(${i},'rdy',1)">+</button></div></div>
+      </div>
+      ${lowRdy ? `<div class="alert-row"><span class="alert-dot"></span><span class="alert-text">Ready stock low — consider moving saplings forward</span></div>` : ''}
+    </div>`;
+    [sel, psel].forEach(s => { const o = document.createElement('option'); o.value = i; o.text = v.name + ' – ' + v.cultivar; s.add(o); });
+  });
+}
+
+function renderSales() {
+  const list = document.getElementById('sales-list');
+  const now = new Date(); const m = now.getMonth(), y = now.getFullYear();
+  const monthly = state.sales.filter(s => { const d = new Date(s.date); return d.getMonth() === m && d.getFullYear() === y; });
+  document.getElementById('month-total').textContent = '$' + Math.round(monthly.reduce((a,s) => a+s.total, 0));
+  document.getElementById('units-total').textContent = monthly.reduce((a,s) => a+s.qty, 0);
+  document.getElementById('sales-count').textContent = monthly.length + ' sale' + (monthly.length !== 1 ? 's' : '');
+  if (!state.sales.length) { list.innerHTML = '<div style="font-size:13px;color:var(--text2);text-align:center;padding:8px 0;">No sales yet</div>'; return; }
+  list.innerHTML = state.sales.slice().reverse().slice(0,15).map(s =>
+    `<div class="sale-item"><div class="sale-left"><div class="sale-name">${s.flower} – ${s.stage} × ${s.qty}</div><div class="sale-meta">${s.customer} · ${fmtShort(s.date)}</div></div><div class="sale-amount">$${s.total.toFixed(2)}</div></div>`
+  ).join('');
+}
+
+function renderPropLog() {
+  const log = document.getElementById('prop-log');
+  if (!state.propLogs.length) { log.innerHTML = '<div style="font-size:13px;color:var(--text2);text-align:center;padding:8px 0;">No batches logged yet</div>'; return; }
+  const al = {cut:'Cuttings taken', sap:'Potted up to saplings', rdy:'Moved to ready'};
+  const ar = {cut:'→ added to Cuttings', sap:'Cuttings → Saplings', rdy:'Saplings → Ready'};
+  log.innerHTML = state.propLogs.slice().reverse().slice(0,10).map(p =>
+    `<div class="prop-item"><div class="prop-name">${p.variety} — ${al[p.action]} × ${p.qty}</div><div class="prop-meta">${fmtShort(p.date)}</div><div class="prop-arrow">${ar[p.action]}</div></div>`
+  ).join('');
+}
+
+function renderSuppliers() {
+  const list = document.getElementById('supplier-list');
+  if (!state.suppliers.length) { list.innerHTML = '<div style="font-size:13px;color:var(--text2);text-align:center;padding:8px 0;">No suppliers yet — add one above</div>'; return; }
+  list.innerHTML = state.suppliers.map((s, i) => `
+    <div class="supplier-row">
+      <div class="sup-left"><div class="sup-name">${s.name}</div><div class="sup-detail">${s.flowers}${s.note ? ' · ' + s.note : ''}</div></div>
+      <div class="sup-right">
+        <span class="status-badge ${s.status==='ok'?'badge-ok':'badge-low'}" onclick="toggleSupStatus(${i})">${s.status==='ok'?'Good stock':'Reorder soon'}</span>
+        <button class="del-btn" onclick="deleteSupplier(${i})">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+function updatePropHint() {
+  const action = document.getElementById('prop-action').value;
+  const hint = document.getElementById('prop-hint');
+  const msgs = {cut:'Stock update: adds to Cuttings count', sap:'Stock update: deducts from Cuttings, adds to Saplings', rdy:'Stock update: deducts from Saplings, adds to Ready'};
+  hint.textContent = msgs[action]; hint.style.display = 'block';
+}
+
+function adjust(i, key, delta) { state.varieties[i].counts[key] = Math.max(0, state.varieties[i].counts[key] + delta); saveState(); renderVarieties(); }
+
+function deleteVariety(i) {
+  if (confirm('Remove ' + state.varieties[i].name + ' – ' + state.varieties[i].cultivar + '? This cannot be undone.')) {
+    state.varieties.splice(i, 1);
+    saveState(); renderVarieties();
+  }
+}
+
+function addSupplier() {
+  const name = document.getElementById('sup-name').value.trim(); if (!name) return;
+  state.suppliers.push({name, flowers: document.getElementById('sup-flowers').value.trim(), note: document.getElementById('sup-note').value.trim(), status: newSupStatus});
+  ['sup-name','sup-flowers','sup-note'].forEach(id => document.getElementById(id).value = '');
+  setStatus('ok'); saveState(); renderSuppliers();
+  flash('sup-flash', name + ' added!');
+}
+
+function toggleSupStatus(i) { state.suppliers[i].status = state.suppliers[i].status === 'ok' ? 'low' : 'ok'; saveState(); renderSuppliers(); }
+function deleteSupplier(i) { if (confirm('Remove ' + state.suppliers[i].name + '?')) { state.suppliers.splice(i,1); saveState(); renderSuppliers(); } }
+
+function logPropagation() {
+  const vi = parseInt(document.getElementById('prop-variety').value);
+  const action = document.getElementById('prop-action').value;
+  const qty = parseInt(document.getElementById('prop-qty').value) || 0;
+  if (!qty) return;
+  const v = state.varieties[vi];
+  if (action === 'cut') v.counts.cut += qty;
+  else if (action === 'sap') { v.counts.cut = Math.max(0, v.counts.cut - qty); v.counts.sap += qty; }
+  else if (action === 'rdy') { v.counts.sap = Math.max(0, v.counts.sap - qty); v.counts.rdy += qty; }
+  state.propLogs.push({variety: v.name + ' – ' + v.cultivar, action, qty, date: new Date().toISOString()});
+  saveState(); renderVarieties(); renderPropLog();
+  flash('prop-flash', 'Batch logged — stock updated!');
+}
+
+function recordSale() {
+  const vi = parseInt(document.getElementById('sale-flower').value);
+  const stage = document.getElementById('sale-stage').value;
+  const customer = document.getElementById('sale-customer').value || 'Walk-in';
+  const qty = parseInt(document.getElementById('sale-qty').value) || 1;
+  const price = parseFloat(document.getElementById('sale-price').value) || 0;
+  const v = state.varieties[vi];
+  const key = stage === 'Ready' ? 'rdy' : stage === 'Sapling' ? 'sap' : 'cut';
+  v.counts[key] = Math.max(0, v.counts[key] - qty);
+  state.sales.push({flower: v.name, cultivar: v.cultivar, stage, customer, qty, price, total: qty*price, date: new Date().toISOString()});
+  saveState(); renderVarieties(); renderSales();
+  document.getElementById('sale-customer').value = '';
+  document.getElementById('sale-qty').value = 1;
+}
+
+function applyConfidence(suffix, confidence) {
+  const badge = document.getElementById('conf-' + suffix);
+  const hint = document.getElementById('hint-' + suffix);
+  const inputs = document.getElementById('result-' + suffix).querySelectorAll('.field-input');
+  badge.textContent = confidence + ' confidence'; badge.className = 'conf-badge';
+  const low = confidence === 'Low' || confidence === 'Medium';
+  badge.classList.add(confidence === 'High' ? 'conf-high' : confidence === 'Medium' ? 'conf-medium' : 'conf-low');
+  hint.style.display = low ? 'inline' : 'none';
+  inputs.forEach(inp => inp.className = 'field-input' + (low ? ' highlight' : ''));
+}
+
+function extractDominantColour(imgEl) {
+  const canvas = document.createElement('canvas'); canvas.width = 40; canvas.height = 40;
+  const ctx = canvas.getContext('2d'); ctx.drawImage(imgEl, 0, 0, 40, 40);
+  const data = ctx.getImageData(0,0,40,40).data;
+  let rS=0, gS=0, bS=0, n=0;
+  for (let i=0; i<data.length; i+=4) { const br=(data[i]+data[i+1]+data[i+2])/3; if (br>40&&br<230) {rS+=data[i];gS+=data[i+1];bS+=data[i+2];n++;} }
+  if (!n) return '#B8E0A0';
+  return '#' + [Math.round(rS/n),Math.round(gS/n),Math.round(bS/n)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+function closestPaletteColour(hex) {
+  const [r1,g1,b1] = hexToRgb(hex); let best = PALETTE[0], bd = Infinity;
+  PALETTE.forEach(p => { const [r2,g2,b2]=hexToRgb(p.hex); const d=Math.sqrt((r1-r2)**2+(g1-g2)**2+(b1-b2)**2); if(d<bd){bd=d;best=p;} });
+  return best.hex;
+}
+
+function renderSwatches(autoHex) {
+  selectedColour = autoHex;
+  const c = document.getElementById('swatches'); c.innerHTML = '';
+  PALETTE.forEach(p => {
+    const s = document.createElement('div');
+    s.className = 'swatch' + (p.hex === autoHex ? ' selected' : '');
+    s.style.background = p.hex;
+    s.style.border = p.hex === '#FFFFFF' ? '2px solid #D3D1C7' : '2px solid transparent';
+    s.title = p.label;
+    s.onclick = () => {
+      document.querySelectorAll('.swatch').forEach(el => { el.classList.remove('selected'); if(el.style.background!=='rgb(255, 255, 255)') el.style.border='2px solid transparent'; });
+      s.classList.add('selected'); s.style.border = '2px solid var(--text)'; selectedColour = p.hex;
+    };
+    c.appendChild(s);
+  });
+}
+
+async function callClaude(base64, mediaType, prompt) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:prompt}]}]})
+  });
+  const data = await resp.json();
+  return JSON.parse(data.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim());
+}
+
+async function handlePhoto(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUrl = e.target.result, base64 = dataUrl.split(',')[1], mediaType = file.type||'image/jpeg';
+    pendingPhotoUrl = dataUrl;
+    document.getElementById('loading-inv').style.display = 'flex';
+    document.getElementById('result-inv').style.display = 'none';
+    try {
+      const r = await callClaude(base64, mediaType, 'Identify this flower. Respond ONLY with JSON, no markdown: {"flower":"<name>","cultivar":"<cultivar or Unknown>","confidence":"<High|Medium|Low>","colour":"<one of: pink, orange, yellow, light green, teal, blue, purple, red, white, grey>"}');
+      document.getElementById('loading-inv').style.display = 'none';
+      const preview = document.getElementById('preview-inv'); preview.src = dataUrl; preview.style.display = 'block';
+      document.getElementById('inv-flower').value = r.flower;
+      document.getElementById('inv-cultivar').value = r.cultivar !== 'Unknown' ? r.cultivar : '';
+      applyConfidence('inv', r.confidence);
+      const img = new Image(); img.onload = () => { const ex=extractDominantColour(img); const sn=closestPaletteColour(ex); const nm=PALETTE.find(p=>p.label===r.colour); renderSwatches(nm?nm.hex:sn); }; img.src = dataUrl;
+      document.getElementById('result-inv').style.display = 'block';
+    } catch(err) { document.getElementById('loading-inv').style.display='none'; renderSwatches(PALETTE[0].hex); alert('Could not identify. Please enter details manually.'); }
+    event.target.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleSalesPhoto(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUrl = e.target.result, base64 = dataUrl.split(',')[1], mediaType = file.type||'image/jpeg';
+    document.getElementById('loading-sales').style.display = 'flex';
+    document.getElementById('result-sales').style.display = 'none';
+    try {
+      const r = await callClaude(base64, mediaType, 'Identify the flower. Respond ONLY with JSON, no markdown: {"flower":"<name>","cultivar":"<cultivar or Unknown>","confidence":"<High|Medium|Low>","stage":"<Cutting|Sapling|Ready>"}');
+      document.getElementById('loading-sales').style.display = 'none';
+      const preview = document.getElementById('preview-sales'); preview.src = dataUrl; preview.style.display = 'block';
+      document.getElementById('sales-flower-id').value = r.flower + (r.cultivar&&r.cultivar!=='Unknown'?' – '+r.cultivar:'');
+      document.getElementById('sales-stage-id').value = r.stage || '';
+      applyConfidence('sales', r.confidence);
+      document.getElementById('result-sales').style.display = 'block';
+    } catch(err) { document.getElementById('loading-sales').style.display='none'; alert('Could not identify. Try again.'); }
+    event.target.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function acceptVariety() {
+  const flower = document.getElementById('inv-flower').value.trim();
+  const cultivar = document.getElementById('inv-cultivar').value.trim();
+  if (!flower) return;
+  document.getElementById('result-inv').style.display = 'none';
+  state.varieties.push({name:flower, cultivar:cultivar||'—', photo:pendingPhotoUrl, colour:selectedColour||PALETTE[0].hex, counts:{cut:0,sap:0,rdy:0}});
+  pendingPhotoUrl = null; saveState(); renderVarieties();
+  flash('inv-flash', flower + (cultivar?' – '+cultivar:'') + ' added!');
+}
+
+function acceptSaleFlower() {
+  const fv = document.getElementById('sales-flower-id').value.trim();
+  const sv = document.getElementById('sales-stage-id').value.trim();
+  document.getElementById('result-sales').style.display = 'none';
+  const sel = document.getElementById('sale-flower'); let matched = false;
+  for (let i=0; i<sel.options.length; i++) { if(sel.options[i].text.toLowerCase().includes(fv.split(' – ')[0].toLowerCase())){sel.selectedIndex=i;matched=true;break;} }
+  if (!matched) { const o=document.createElement('option'); o.text=fv; sel.add(o); sel.selectedIndex=sel.options.length-1; }
+  const ss = document.getElementById('sale-stage');
+  for (let i=0; i<ss.options.length; i++) { if(ss.options[i].text.toLowerCase()===sv.toLowerCase()){ss.selectedIndex=i;break;} }
+}
+
+function openExport() { document.getElementById('export-modal').classList.add('open'); }
+function closeExport() { document.getElementById('export-modal').classList.remove('open'); }
+
+function toCSV(rows) {
+  return rows.map(row => row.map(cell => {
+    const s = String(cell == null ? '' : cell);
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g,'""') + '"' : s;
+  }).join(',')).join('\n');
+}
+
+function downloadCSV(filename, content) {
+  const blob = new Blob([content], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportCSV(type) {
+  const today = new Date().toISOString().slice(0,10);
+  if (type === 'sales') {
+    const rows = [['Date','Flower','Cultivar','Stage','Customer','Qty','Price each','Total']];
+    state.sales.forEach(s => rows.push([fmtDate(s.date), s.flower, s.cultivar||'', s.stage, s.customer, s.qty, s.price||'', s.total.toFixed(2)]));
+    downloadCSV(`bloom-sales-${today}.csv`, toCSV(rows));
+  } else if (type === 'stock') {
+    const rows = [['Flower','Cultivar','Cuttings','Saplings','Ready']];
+    state.varieties.forEach(v => rows.push([v.name, v.cultivar, v.counts.cut, v.counts.sap, v.counts.rdy]));
+    downloadCSV(`bloom-stock-${today}.csv`, toCSV(rows));
+  } else if (type === 'propagation') {
+    const labels = {cut:'Cuttings taken from parent', sap:'Cuttings potted up to saplings', rdy:'Saplings moved to ready'};
+    const rows = [['Date','Variety','Action','Quantity']];
+    state.propLogs.forEach(p => rows.push([fmtDate(p.date), p.variety, labels[p.action], p.qty]));
+    downloadCSV(`bloom-propagation-${today}.csv`, toCSV(rows));
+  } else if (type === 'suppliers') {
+    const rows = [['Supplier name','Flowers supplied','Note','Status']];
+    state.suppliers.forEach(s => rows.push([s.name, s.flowers, s.note, s.status==='ok'?'Good stock':'Reorder soon']));
+    downloadCSV(`bloom-suppliers-${today}.csv`, toCSV(rows));
+  }
+  closeExport();
+}
+
+document.getElementById('header-date').textContent = new Date().toLocaleString('default',{month:'long',year:'numeric'});
+document.getElementById('export-modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeExport(); });
+loadState(); renderVarieties(); renderSales(); renderPropLog(); renderSuppliers(); updatePropHint();
+</script>
+</body>
+</html>
